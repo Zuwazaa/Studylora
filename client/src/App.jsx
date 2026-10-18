@@ -5,6 +5,8 @@ import Layout from "./components/Layout";
 import Landing from "./pages/Landing";
 import AuthPage, { ResetPassword } from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
+import Splash from "./components/Splash";
+import BookLoader from "./components/BookLoader";
 
 const Teacher = lazy(() => import("./pages/Teacher"));
 const Library = lazy(() => import("./pages/Library"));
@@ -20,13 +22,15 @@ const Spinner = () => <div className="center" style={{ padding: 80 }}><span clas
 function Private({ children }) {
   const { user, booting } = useApp();
   const loc = useLocation();
-  if (booting) return <div className="center" style={{ minHeight: "100vh" }}><span className="spinner lg" /></div>;
+  if (booting) return <div className="page-boot"><BookLoader /></div>;
   if (!user) return <Navigate to="/kirish" replace state={{ from: loc.pathname }} />;
   return children;
 }
 
 export default function App() {
   return (
+    <>
+    <Splash />
     <Suspense fallback={<Spinner />}>
       <Routes>
         <Route path="/" element={<Landing />} />
@@ -50,5 +54,6 @@ export default function App() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Suspense>
+    </>
   );
 }

@@ -383,3 +383,10 @@
   .bl-leaf, .book-loader .logo-mark, .bl-bar i, .bl-dots::after { animation: none; }
   .bl-dots::after { content: "..."; }
 }
+
+/* Birinchi kirishdagi to'liq ekran */
+.splash { position: fixed; inset: 0; z-index: 1000; background: #f1f3f2; display: grid; place-items: center; transition: opacity .4s ease; }
+.splash .book-loader { border-radius: 0; min-height: 100%; }
+.splash.leaving { opacity: 0; pointer-events: none; }
+.page-boot { min-height: 100vh; display: grid; }
+.page-boot .book-loader { border-radius: 0; }
