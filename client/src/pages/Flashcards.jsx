@@ -1,3 +1,4 @@
+import SubjectPicker from "../components/SubjectPicker";
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { Plus, Trash2, Play, Layers3, Sparkles } from "lucide-react";
@@ -51,11 +52,9 @@ function NewDeck({ preset, onCreated, onClose }) {
                   {Object.keys(GRADES).map((g) => <option key={g} value={g}>{t("grade.n", { n: g })}</option>)}
                 </select>
               </label>
-              <label className="field"><span>{t("quiz.subject")}</span>
-                <select className="select" value={subjectId} onChange={(e) => setSubjectId(e.target.value)}>
-                  {subjectsOf(grade).map((s) => <option key={s.id} value={s.id}>{s[lang]}</option>)}
-                </select>
-              </label>
+              <div className="field"><span>{t("quiz.subject")}</span>
+                <SubjectPicker grade={grade} value={subjectId} onChange={setSubjectId} books={books} />
+              </div>
             </div>
           )}
           <label className="field"><span>{t("quiz.topicOptional")}</span><input className="input" value={topic} onChange={(e) => setTopic(e.target.value)} placeholder={t("quiz.topicPh")} /></label>

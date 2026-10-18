@@ -166,6 +166,7 @@ export default {
 
   "loader.books": "Книги готовятся",
   "reader.closeAi": "Закрыть панель ИИ",
+  "picker.book": "учебник",
   "reader.back": "Назад",
   "reader.book": "Книга",
   "reader.chat": "Учитель",

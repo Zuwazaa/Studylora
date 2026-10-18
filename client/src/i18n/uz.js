@@ -172,6 +172,7 @@ export default {
   // Darslik o'quvchi
   "loader.books": "Kitoblar tayyorlanmoqda",
   "reader.closeAi": "AI panelini yopish",
+  "picker.book": "darslik",
   "reader.back": "Orqaga",
   "reader.book": "Kitob",
   "reader.chat": "Ustoz",

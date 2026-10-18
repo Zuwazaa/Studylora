@@ -1,3 +1,4 @@
+import SubjectPicker from "../components/SubjectPicker";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
@@ -113,11 +114,9 @@ function Setup({ onStart, initial }) {
                 {Object.keys(GRADES).map((g) => <option key={g} value={g}>{t("grade.n", { n: g })}</option>)}
               </select>
             </label>
-            <label className="field"><span>{t("quiz.subject")}</span>
-              <select className="select" value={f.subjectId} onChange={(e) => set("subjectId", e.target.value)}>
-                {subjectsOf(f.grade).map((s) => <option key={s.id} value={s.id}>{s[lang]}{books?.[makeKey(f.grade, s.id)] ? " 📘" : ""}</option>)}
-              </select>
-            </label>
+            <div className="field"><span>{t("quiz.subject")}</span>
+              <SubjectPicker grade={f.grade} value={f.subjectId} onChange={(id) => set("subjectId", id)} books={books} />
+            </div>
             <p className={`form-note ${hasBook ? "ok" : ""}`}>
               {books === null ? "…" : hasBook ? t("quiz.bookFound") : t("quiz.bookMissing")}
             </p>
