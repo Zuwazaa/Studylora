@@ -29,6 +29,7 @@ Testlar: `cd server && npm test`.
 **Backend (Render)**
 - Render → New → Blueprint → shu repo. `render.yaml` hammasini sozlaydi, faqat yashirin kalitlarni (Mongo, Gemini, R2) so'raydi.
 - `CLIENT_ORIGIN` Vercel manziliga teng bo'lishi kerak.
+- `ADMIN_EMAILS` — admin panelga (`/app/admin`) kira oladigan emaillar, vergul bilan. Bo'sh bo'lsa panel hech kimga ochilmaydi.
 - MongoDB Atlas → Network Access'da `0.0.0.0/0` ruxsat bo'lishi kerak.
 
 **Frontend (Vercel)**

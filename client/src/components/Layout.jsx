@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, GraduationCap, BookMarked, ClipboardCheck, Layers3, AlertCircle, BarChart3, Sparkles,
-  Settings, LogOut, Moon, Sun, Menu, X, Flame, FlaskConical,
+  Settings, LogOut, Moon, Sun, Menu, X, Flame, FlaskConical, ShieldCheck,
 } from "lucide-react";
 import { useApp } from "../context/AppContext";
 import Logo from "./Logo";
@@ -63,6 +63,11 @@ export default function Layout() {
           </div>
         </div>
         <div className="sb-bottom">
+          {user?.isAdmin && (
+            <NavLink to="/app/admin" className={({ isActive }) => `sb-link${isActive ? " active" : ""}`}>
+              <ShieldCheck size={19} strokeWidth={1.9} /><span>{t("nav.admin")}</span>
+            </NavLink>
+          )}
           <NavLink to="/app/sozlamalar" className={({ isActive }) => `sb-link${isActive ? " active" : ""}`}>
             <Settings size={19} strokeWidth={1.9} /><span>{t("nav.settings")}</span>
           </NavLink>

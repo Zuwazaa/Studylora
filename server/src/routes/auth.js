@@ -3,14 +3,14 @@ import crypto from "node:crypto";
 import bcrypt from "bcryptjs";
 import rateLimit from "express-rate-limit";
 import User from "../models/User.js";
-import { requireAuth, signToken } from "../middleware/auth.js";
+import { requireAuth, signToken, isAdminEmail } from "../middleware/auth.js";
 import { sendMail, mailEnabled } from "../lib/mail.js";
 import { config } from "../config.js";
 
 const router = Router();
 const limiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 30, message: { error: "too_many_attempts" } });
 
-const publicUser = (u) => ({ id: u.id, name: u.name, email: u.email, grade: u.grade, lang: u.lang });
+const publicUser = (u) => ({ id: u.id, name: u.name, email: u.email, grade: u.grade, lang: u.lang, ...(isAdminEmail(u.email) ? { isAdmin: true } : {}) });
 const validEmail = (e) => /^\S+@\S+\.\S+$/.test(e);
 const cleanName = (s) => String(s || "").replace(/\s+/g, " ").trim().slice(0, 60);
 

@@ -12,6 +12,7 @@ import quizRoutes from "./routes/quiz.js";
 import flashcardRoutes from "./routes/flashcards.js";
 import pedagogyRoutes from "./routes/pedagogy.js";
 import labRoutes from "./routes/lab.js";
+import adminRoutes from "./routes/admin.js";
 
 export function createApp() {
   const app = express();
@@ -38,6 +39,7 @@ export function createApp() {
   app.use("/api/flashcards", flashcardRoutes);
   app.use("/api/pedagogy", pedagogyRoutes);
   app.use("/api/lab", labRoutes);
+  app.use("/api/admin", adminRoutes);
   app.use("/api", (req, res) => res.status(404).json({ error: "not_found" }));
 
   // Express 5: async xatolar shu yerga keladi

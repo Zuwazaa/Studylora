@@ -288,6 +288,16 @@
 .table th { text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); padding: 8px 10px; border-bottom: 1px solid var(--line); }
 .table td { padding: 12px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
 
+/* ---------- Admin ---------- */
+.admin .card-head { flex-wrap: wrap; }
+.admin .stat-row { margin-top: 0; }
+.adm-search { position: relative; display: flex; align-items: center; min-width: 240px; }
+.adm-search svg { position: absolute; left: 12px; color: var(--muted); pointer-events: none; }
+.adm-search .input { padding-left: 36px; }
+.adm-bars { grid-template-columns: repeat(14, 1fr); gap: 4px; margin-top: 4px; }
+.adm-bars .week-bar { height: 120px; }
+.adm-pager { justify-content: center; gap: 12px; margin-top: 14px; }
+
 /* ---------- Metodika ---------- */
 .methods-hero { display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap; padding: 28px; margin-bottom: 18px; }
 .methods-hero h2 { font-size: clamp(24px, 3vw, 34px); font-weight: 300; margin: 6px 0; letter-spacing: -.02em; }
