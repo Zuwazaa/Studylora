@@ -1,6 +1,7 @@
+import SubjectPicker from "../components/SubjectPicker";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { Plus, Trash2, Upload, FileText, Globe2, MessagesSquare, X } from "lucide-react";
+import { Plus, Trash2, Upload, FileText, Globe2, MessagesSquare, X, Lightbulb, MessageCircleQuestion, NotebookPen, Presentation, Target, Repeat } from "lucide-react";
 import { Chats, Courses } from "../api/client";
 import { useApp } from "../context/AppContext";
 import ChatThread from "../components/ChatThread";
@@ -56,6 +57,9 @@ function UploadBox({ onDone }) {
     </>
   );
 }
+
+const MODE_ICONS = { explain: Lightbulb, socratic: MessageCircleQuestion, homework: NotebookPen, feynman: Presentation, exam: Target, revision: Repeat };
+const ModeIcon = ({ id }) => { const I = MODE_ICONS[id]; return I ? <I size={14} /> : null; };
 
 export default function Teacher() {
   const { t, lang, user } = useApp();
@@ -158,7 +162,7 @@ export default function Teacher() {
           <div className="modes">
             {MODE_ORDER.map((id) => (
               <button key={id} className={`mode${mode === id ? " on" : ""}`} onClick={() => setMode(id)} title={ped?.modes?.[id]?.short?.[lang]}>
-                {ped?.modes?.[id]?.name?.[lang] || t(`mode.${id}`)}
+                <ModeIcon id={id} />{ped?.modes?.[id]?.name?.[lang] || t(`mode.${id}`)}
               </button>
             ))}
           </div>
@@ -168,10 +172,7 @@ export default function Teacher() {
             <option value="">{t("teacher.anyGrade")}</option>
             {Object.keys(GRADES).map((g) => <option key={g} value={g}>{t("grade.n", { n: g })}</option>)}
           </select>
-          <select className="select sm" value={subject} onChange={(e) => setSubject(e.target.value)} disabled={!grade}>
-            <option value="">{t("teacher.anySubject")}</option>
-            {grade && subjectsOf(grade).map((s) => <option key={s.id} value={s.id}>{s[lang]}</option>)}
-          </select>
+          <SubjectPicker small grade={grade} value={subject} onChange={setSubject} disabled={!grade} emptyLabel={t("teacher.anySubject")} />
           <button className={`chip btnlike${web ? " on" : ""}`} onClick={() => setWeb((w) => !w)} title={t("chat.webHint")}><Globe2 size={13} />{t("chat.web")}</button>
           {modeInfo && (
             <div className="mode-skills">

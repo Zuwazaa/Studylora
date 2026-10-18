@@ -5,15 +5,17 @@ import { subjectsOf, bookKey } from "../data/catalog";
 import SubjectIcon from "./SubjectIcon";
 
 /* Fan tanlash: har bir fan o'z ikonkasi bilan, darsligi bor fanlar belgilanadi. */
-export default function SubjectPicker({ grade, value, onChange, books }) {
+export default function SubjectPicker({ grade, value, onChange, books, emptyLabel, disabled, small }) {
   const { t, lang } = useApp();
   const [open, setOpen] = useState(false);
   const [hi, setHi] = useState(0);
   const ref = useRef(null);
   const listRef = useRef(null);
-  const items = subjectsOf(grade);
+  // emptyLabel berilsa ro'yxat boshida "Istalgan fan" varianti bo'ladi
+  const empty = emptyLabel ? [{ id: "", uz: emptyLabel, ru: emptyLabel, icon: "book", tone: "" }] : [];
+  const items = [...empty, ...(grade ? subjectsOf(grade) : [])];
   const cur = items.find((s) => s.id === value) || items[0];
-  const has = (id) => Boolean(books?.[bookKey(grade, id)]);
+  const has = (id) => Boolean(id && books?.[bookKey(grade, id)]);
 
   useEffect(() => {
     if (!open) return;
@@ -38,8 +40,9 @@ export default function SubjectPicker({ grade, value, onChange, books }) {
   };
 
   return (
-    <div className="picker" ref={ref}>
-      <button type="button" className="select picker-btn" aria-haspopup="listbox" aria-expanded={open} onClick={() => setOpen((o) => !o)} onKeyDown={onKey}>
+    <div className={`picker${small ? " sm" : ""}`} ref={ref}>
+      <button type="button" className={`select picker-btn${small ? " sm" : ""}`} aria-haspopup="listbox" aria-expanded={open} disabled={disabled}
+              onClick={() => setOpen((o) => !o)} onKeyDown={onKey}>
         <span className={`picker-ic ${cur.tone}`}><SubjectIcon icon={cur.icon} size={16} /></span>
         <span className="grow">{cur[lang]}</span>
         {has(cur.id) && <BookCheck size={16} className="picker-book" />}
