@@ -104,6 +104,33 @@ const SYSTEM = (lang) =>
     "Every question has exactly 4 options and exactly one correct option. Options are similar in length and style. No 'all of the above'. Formulas in LaTeX ($...$).",
   ].join("\n");
 
+// Model ba'zan javob indeksini "1" yoki "B" ko'rinishida qaytaradi
+const toIndex = (a) => {
+  if (Number.isInteger(a)) return a;
+  const str = String(a ?? "").trim();
+  if (/^[A-D]$/i.test(str)) return str.toUpperCase().charCodeAt(0) - 65;
+  return /^\d$/.test(str) ? Number(str) : NaN;
+};
+
+const S = (type, extra = {}) => ({ type, ...extra });
+const QUIZ_SCHEMA = S("OBJECT", {
+  properties: {
+    topic: S("STRING"),
+    questions: S("ARRAY", {
+      items: S("OBJECT", {
+        properties: {
+          q: S("STRING"), options: S("ARRAY", { items: S("STRING") }), answer: S("INTEGER"), explain: S("STRING"),
+          whyWrong: S("ARRAY", { items: S("STRING") }), hints: S("ARRAY", { items: S("STRING") }),
+          bloom: S("STRING"), source: S("STRING"), page: S("INTEGER", { nullable: true }),
+        },
+        required: ["q", "options", "answer", "explain", "whyWrong", "hints", "bloom"],
+        propertyOrdering: ["q", "options", "answer", "explain", "whyWrong", "hints", "bloom", "source", "page"],
+      }),
+    }),
+  },
+  required: ["topic", "questions"],
+});
+
 const valid = (q) =>
   q && typeof q.q === "string" && q.q.trim() &&
   Array.isArray(q.options) && q.options.length === 4 && q.options.every((o) => typeof o === "string" && o.trim()) &&
@@ -157,10 +184,12 @@ export async function buildQuiz({ subject, grade, topic, difficulty = "medium", 
     system: SYSTEM(lang),
     contents: [{ role: "user", parts }],
     json: true,
+    schema: QUIZ_SCHEMA,
     temperature: 0.8,
   });
 
   const questions = (Array.isArray(data?.questions) ? data.questions : [])
+    .map((q) => (q && typeof q === "object" ? { ...q, answer: toIndex(q.answer) } : q))
     .filter(valid)
     .slice(0, count)
     .map((q) => {

@@ -20,6 +20,15 @@ const pubDeck = (d) => ({
   id: String(d._id), title: d.title, subject: d.subject, grade: d.grade, source: d.source,
   total: d.cards.length, due: d.cards.filter((c) => c.due <= now()).length, updatedAt: d.updatedAt,
 });
+const CARDS_SCHEMA = {
+  type: "OBJECT",
+  properties: {
+    title: { type: "STRING" },
+    cards: { type: "ARRAY", items: { type: "OBJECT", properties: { front: { type: "STRING" }, back: { type: "STRING" } }, required: ["front", "back"] } },
+  },
+  required: ["title", "cards"],
+};
+
 const pubCard = (deck, c) => ({ deckId: String(deck._id), deckTitle: deck.title, id: String(c._id), front: c.front, back: c.back, reps: c.reps, interval: c.interval });
 const owned = (userId, id) => (mongoose.isValidObjectId(id) ? Deck.findOne({ _id: id, userId }) : null);
 
@@ -72,7 +81,7 @@ router.post("/generate", genLimit, async (req, res) => {
   }];
   if (source.filePart) parts.unshift(source.filePart);
 
-  const { data } = await generate({ system: `You create study flashcards. ${langRule(lang)}`, contents: [{ role: "user", parts }], json: true, temperature: 0.6 });
+  const { data } = await generate({ system: `You create study flashcards. ${langRule(lang)}`, contents: [{ role: "user", parts }], json: true, schema: CARDS_SCHEMA, temperature: 0.6 });
   const cards = (Array.isArray(data?.cards) ? data.cards : [])
     .filter((c) => c?.front && c?.back)
     .slice(0, count)

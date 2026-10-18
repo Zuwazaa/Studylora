@@ -56,14 +56,14 @@ export default function BookReader({ title, pdfUrl, chatKey, intro, grade, subje
     let on = true;
     setStatus("loading");
     // Yuklangan kitoblar faqat egasiga beriladi — token bilan so'raymiz
-    // Tashqi (CDN) havolaga token yuborilmaydi
-    const token = /^https?:/i.test(pdfUrl) ? null : getToken();
+    // Token faqat o'z API'mizga yuboriladi (CDN'dagi darsliklarga emas)
+    const token = pdfUrl.startsWith("/api/") ? getToken() : null;
     // Range so'rovlar: butun faylni kutmasdan faqat kerakli betlar yuklanadi
     const task = pdfjsLib.getDocument({
       url: apiUrl(pdfUrl),
       httpHeaders: token ? { Authorization: `Bearer ${token}` } : undefined,
+      // Range ishlasa faqat kerakli qismlar olinadi; ishlamasa oqim bilan to'liq yuklanadi
       disableAutoFetch: true,
-      disableStream: true,
       rangeChunkSize: 262144,
     });
     task.promise

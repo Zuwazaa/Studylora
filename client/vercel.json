@@ -1,3 +1,6 @@
 {
-  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+  "rewrites": [
+    { "source": "/cdn/books/:path*", "destination": "https://pub-29c11e82661d4766a8c49675efbaaaec.r2.dev/:path*" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
 }

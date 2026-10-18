@@ -6,6 +6,16 @@ const BASE = "https://generativelanguage.googleapis.com/v1beta";
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const busy = (status, msg) => status === 429 || status === 503 || /high demand|overloaded|unavailable/i.test(msg);
 
+/* Kunlik kvotasi tugagan model "retry in 15h10m" muddatigacha o'tkazib yuboriladi,
+   shunda har so'rovda behuda urinish va kutish bo'lmaydi. */
+const exhausted = new Map(); // model -> qachongacha (ms)
+function quotaWait(msg) {
+  if (!/quota/i.test(msg)) return 0;
+  const m = /retry in (?:(\d+)h)?(?:(\d+)m)?(?:([\d.]+)s)?/i.exec(msg);
+  if (!m) return 60_000;
+  return ((+m[1] || 0) * 3600 + (+m[2] || 0) * 60 + (+m[3] || 0)) * 1000;
+}
+
 /* Kalitlar va modellar bo'yicha urinish: band (503/429) bo'lsa biroz kutib qayta urinadi,
    keyin zaxira modelga o'tadi (GEMINI_FALLBACK_MODELS). */
 async function callModel(body) {
@@ -13,7 +23,9 @@ async function callModel(body) {
   if (!keys.length) throw new HttpError(500, "GEMINI_API_KEY sozlanmagan");
 
   let lastError;
-  for (const model of [config.gemini.model, ...config.gemini.fallbacks]) {
+  const models = [config.gemini.model, ...config.gemini.fallbacks];
+  const ready = models.filter((m) => !(exhausted.get(m) > Date.now()));
+  for (const model of ready.length ? ready : models) {
     for (let attempt = 0; attempt < 2; attempt++) {
       for (const key of keys) {
         const res = await fetch(`${BASE}/models/${model}:generateContent?key=${key}`, {
@@ -24,10 +36,12 @@ async function callModel(body) {
         const data = await res.json().catch(() => ({}));
         if (res.ok) return data;
         lastError = { status: res.status, message: data.error?.message || `HTTP ${res.status}` };
-        console.warn(`[gemini] ${model}: ${lastError.message}`);
+        console.warn(`[gemini] ${model}: ${lastError.message.slice(0, 200)}`);
+        const wait = res.status === 429 ? quotaWait(lastError.message) : 0;
+        if (wait > 30_000) { exhausted.set(model, Date.now() + wait); break; }
         if (res.status === 400 && !busy(res.status, lastError.message)) break; // so'rov xato — boshqa kalit yordam bermaydi
       }
-      if (!busy(lastError?.status, lastError?.message || "")) break;
+      if (exhausted.get(model) > Date.now() || !busy(lastError?.status, lastError?.message || "")) break;
       await sleep(1200 * (attempt + 1));
     }
   }
@@ -53,13 +67,15 @@ const sourcesOf = (data) => {
  * json     — true bo'lsa javob JSON sifatida parse qilinadi
  * search   — true bo'lsa Google Search grounding yoqiladi (JSON bilan birga ishlatilmaydi)
  */
-export async function generate({ system, contents, json = false, search = false, temperature = 0.7 }) {
+export async function generate({ system, contents, json = false, schema, search = false, temperature = 0.7 }, retry = 1) {
   const body = {
     contents: typeof contents === "string" ? [{ role: "user", parts: [{ text: contents }] }] : contents,
     generationConfig: { temperature },
   };
   if (system) body.systemInstruction = { parts: [{ text: system }] };
   if (json) body.generationConfig.responseMimeType = "application/json";
+  // Sxema berilsa model JSON tuzilishini buzolmaydi (constrained decoding)
+  if (json && schema) body.generationConfig.responseSchema = schema;
   if (search) body.tools = [{ google_search: {} }];
 
   const data = await callModel(body);
@@ -71,10 +87,27 @@ export async function generate({ system, contents, json = false, search = false,
   if (!json) return { text, sources: sourcesOf(data) };
 
   try {
-    return { data: JSON.parse(text.replace(/^```(?:json)?\s*|\s*```$/g, "")) };
+    return { data: JSON.parse(fixLatexEscapes(text.replace(/^```(?:json)?\s*|\s*```$/g, ""))) };
   } catch {
+    // Kamdan-kam buzilgan JSON: bir marta qayta so'raymiz
+    if (retry > 0) return generate({ system, contents, json, schema, search, temperature }, retry - 1);
     throw new HttpError(502, "AI javobi noto'g'ri formatda keldi, qayta urinib ko'ring");
   }
+}
+
+/* Model JSON ichida LaTeX'ni ko'pincha bitta "\" bilan yozadi ("\cdot", "\frac").
+   Bu JSON'ni buzadi yoki jimgina o'zgartiradi ("\f" -> sahifa belgisi). Shuni tuzatamiz. */
+const LATEX = /^(?:frac|forall|beta|bar|binom|boxed|big|bmod|nabla|neq|ne(?![a-z])|nu|not|newline|right|rho|times|theta|tau|tan|text|tfrac|to(?![a-z])|triangle|top|underline|uparrow|upsilon)/;
+export function fixLatexEscapes(s) {
+  return s.replace(/\\([\s\S])/g, (m, c, off) => {
+    if (c === "\\" || c === '"' || c === "/") return m;
+    if ("bfnrtu".includes(c)) {
+      const rest = s.slice(off + 1, off + 14);
+      if (c === "u" && /^u[0-9a-fA-F]{4}/.test(rest)) return m;
+      return LATEX.test(rest) ? "\\\\" + c : m;
+    }
+    return "\\\\" + c;
+  });
 }
 
 // data:...;base64,... -> Gemini inline_data qismi
@@ -112,3 +145,4 @@ export async function uploadFile(buffer, mimeType, displayName) {
   if (!res.ok || !data.file?.uri) throw new HttpError(502, "Gemini faylni qabul qilmadi");
   return { uri: data.file.uri, mimeType, expiresAt: Date.now() + 46 * 3600 * 1000 };
 }
+

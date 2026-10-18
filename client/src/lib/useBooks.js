@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import { Books } from "../api/client";
 
-// Darsliklarning ochiq CDN manzili: ro'yxat va PDF'lar to'g'ridan-to'g'ri Cloudflare'dan olinadi,
-// shuning uchun server uxlab qolgan bo'lsa ham kitoblar darhol chiqadi.
-export const BOOKS_CDN = "https://pub-29c11e82661d4766a8c49675efbaaaec.r2.dev/";
+// Darsliklarning ochiq Cloudflare manzili. Prodda u Vercel orqali o'z domenimizdan beriladi (/cdn/books/),
+// shunda Range so'rovlar CORS cheklovisiz ishlaydi va PDF bo'lib-bo'lib (avval kerakli bet) yuklanadi.
+const R2_PUBLIC = "https://pub-29c11e82661d4766a8c49675efbaaaec.r2.dev/";
+export const BOOKS_CDN = import.meta.env.PROD ? "/cdn/books/" : R2_PUBLIC;
+const viaCdn = (url) => (url.startsWith(R2_PUBLIC) ? BOOKS_CDN + url.slice(R2_PUBLIC.length) : url);
 
 let cache = null;
 let pending = null;
@@ -25,6 +27,7 @@ export function useBooks() {
     pending ||= Promise.allSettled([fromCdn(), Books.list()]).then(([cdn, api]) => {
       // Server ro'yxati (yangi bucketdagi kitoblar) + CDN havolalari ustun
       const merged = { ...(api.value?.books || {}), ...(cdn.value || {}) };
+      for (const k of Object.keys(merged)) merged[k] = viaCdn(merged[k]);
       return (cache = merged);
     });
     pending.then(setBooks);

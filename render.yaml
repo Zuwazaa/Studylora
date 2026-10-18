@@ -15,9 +15,9 @@ services:
       - key: CLIENT_ORIGIN
         value: https://studylora.vercel.app
       - key: GEMINI_MODEL
-        value: gemini-3.5-flash
+        value: gemini-3.5-flash-lite
       - key: GEMINI_FALLBACK_MODELS
-        value: gemini-3.8-flash,gemini-3.5-flash-lite
+        value: gemini-3.5-flash,gemini-3.8-flash
       - key: BOOKS_LEGACY_URL
         value: https://pub-29c11e82661d4766a8c49675efbaaaec.r2.dev
       - key: R2_BUCKET

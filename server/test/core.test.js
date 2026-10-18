@@ -100,3 +100,11 @@ test("Laboratoriya: POE ko'rsatmasi bashorat, o'lchovlar va skillarni o'z ichiga
   assert.match(p, /1\. L: 1; T: 2.0/);
   assert.match(p, /MISCONCEPTION|misconception/i);
 });
+
+test("AI JSON: LaTeX backslashes are repaired", async () => {
+  const { fixLatexEscapes } = await import("../src/lib/gemini.js");
+  const raw = String.raw`{"a":"$x \cdot y = \frac{1}{2}$, $a \neq b$","b":"1\n2 \\sqrt{2} é"}`;
+  const o = JSON.parse(fixLatexEscapes(raw));
+  assert.equal(o.a, String.raw`$x \cdot y = \frac{1}{2}$, $a \neq b$`);
+  assert.equal(o.b, "1\n2 \\sqrt{2} é");
+});

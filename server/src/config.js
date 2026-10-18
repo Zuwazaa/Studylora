@@ -10,8 +10,8 @@ export const config = {
 
   gemini: {
     keys: list(process.env.GEMINI_API_KEY),
-    model: process.env.GEMINI_MODEL || "gemini-3.5-flash",
-    fallbacks: list(process.env.GEMINI_FALLBACK_MODELS || "gemini-3.8-flash,gemini-3.5-flash-lite"),
+    model: process.env.GEMINI_MODEL || "gemini-3.5-flash-lite",
+    fallbacks: list(process.env.GEMINI_FALLBACK_MODELS || "gemini-3.5-flash,gemini-3.8-flash"),
   },
 
   r2: {
