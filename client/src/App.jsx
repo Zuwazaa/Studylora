@@ -1,4 +1,4 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { useApp } from "./context/AppContext";
 import Layout from "./components/Layout";
@@ -8,15 +8,41 @@ import Dashboard from "./pages/Dashboard";
 import Splash from "./components/Splash";
 import BookLoader from "./components/BookLoader";
 
-const Teacher = lazy(() => import("./pages/Teacher"));
-const Library = lazy(() => import("./pages/Library"));
-const Quiz = lazy(() => import("./pages/Quiz"));
-const Flashcards = lazy(() => import("./pages/Flashcards"));
-const Mistakes = lazy(() => import("./pages/Mistakes"));
-const Progress = lazy(() => import("./pages/Progress"));
-const Methods = lazy(() => import("./pages/Methods"));
-const Settings = lazy(() => import("./pages/Settings"));
-const Lab = lazy(() => import("./pages/Lab"));
+// Sahifalar alohida bo'laklarda; kirgandan keyin brauzer bo'sh paytida ularni oldindan yuklab qo'yadi
+const pages = {
+  Teacher: () => import("./pages/Teacher"),
+  Library: () => import("./pages/Library"),
+  Quiz: () => import("./pages/Quiz"),
+  Flashcards: () => import("./pages/Flashcards"),
+  Mistakes: () => import("./pages/Mistakes"),
+  Progress: () => import("./pages/Progress"),
+  Methods: () => import("./pages/Methods"),
+  Settings: () => import("./pages/Settings"),
+  Lab: () => import("./pages/Lab"),
+};
+const Teacher = lazy(pages.Teacher);
+const Library = lazy(pages.Library);
+const Quiz = lazy(pages.Quiz);
+const Flashcards = lazy(pages.Flashcards);
+const Mistakes = lazy(pages.Mistakes);
+const Progress = lazy(pages.Progress);
+const Methods = lazy(pages.Methods);
+const Settings = lazy(pages.Settings);
+const Lab = lazy(pages.Lab);
+
+function usePrefetchPages(enabled) {
+  useEffect(() => {
+    if (!enabled) return;
+    const idle = window.requestIdleCallback || ((fn) => setTimeout(fn, 1500));
+    const order = ["Teacher", "Library", "Quiz", "Flashcards", "Mistakes", "Progress", "Lab", "Methods", "Settings"];
+    let i = 0, stop = false;
+    const next = () => { if (stop || i >= order.length) return; pages[order[i++]]().catch(() => {}).finally(() => idle(next)); };
+    const id = setTimeout(() => idle(next), 1200);
+    // Kitob o'quvchi (PDF) ham kerak bo'ladi
+    const pdf = setTimeout(() => idle(() => import("./components/BookReader").catch(() => {})), 4000);
+    return () => { stop = true; clearTimeout(id); clearTimeout(pdf); };
+  }, [enabled]);
+}
 
 const Spinner = () => <div className="center" style={{ padding: 80 }}><span className="spinner lg" /></div>;
 
@@ -29,6 +55,8 @@ function Private({ children }) {
 }
 
 export default function App() {
+  const { user } = useApp();
+  usePrefetchPages(Boolean(user));
   return (
     <>
     <Splash />

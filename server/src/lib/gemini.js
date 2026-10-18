@@ -18,7 +18,7 @@ function quotaWait(msg) {
 
 /* Kalitlar va modellar bo'yicha urinish: band (503/429) bo'lsa biroz kutib qayta urinadi,
    keyin zaxira modelga o'tadi (GEMINI_FALLBACK_MODELS). */
-async function callModel(body) {
+async function callModel(body, { stream = false } = {}) {
   const keys = config.gemini.keys;
   if (!keys.length) throw new HttpError(500, "GEMINI_API_KEY sozlanmagan");
 
@@ -28,13 +28,14 @@ async function callModel(body) {
   for (const model of ready.length ? ready : models) {
     for (let attempt = 0; attempt < 2; attempt++) {
       for (const key of keys) {
-        const res = await fetch(`${BASE}/models/${model}:generateContent?key=${key}`, {
+        const url = stream ? `${BASE}/models/${model}:streamGenerateContent?alt=sse&key=${key}` : `${BASE}/models/${model}:generateContent?key=${key}`;
+        const res = await fetch(url, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(body),
         }).catch((e) => ({ ok: false, status: 0, json: async () => ({ error: { message: e.message } }) }));
+        if (res.ok) return stream ? res : res.json();
         const data = await res.json().catch(() => ({}));
-        if (res.ok) return data;
         lastError = { status: res.status, message: data.error?.message || `HTTP ${res.status}` };
         console.warn(`[gemini] ${model}: ${lastError.message.slice(0, 200)}`);
         const wait = res.status === 429 ? quotaWait(lastError.message) : 0;
@@ -48,8 +49,8 @@ async function callModel(body) {
   throw new HttpError(502, `AI xizmati javob bermadi: ${lastError?.message || "noma'lum xato"}`);
 }
 
-const textOf = (data) =>
-  (data.candidates?.[0]?.content?.parts || []).map((p) => p.text || "").join("").trim();
+const rawText = (data) => (data.candidates?.[0]?.content?.parts || []).map((p) => p.text || "").join("");
+const textOf = (data) => rawText(data).trim();
 
 const sourcesOf = (data) => {
   const chunks = data.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
@@ -61,13 +62,7 @@ const sourcesOf = (data) => {
     .slice(0, 8);
 };
 
-/**
- * system   — tizim ko'rsatmasi (string)
- * contents — Gemini contents massivi yoki oddiy matn
- * json     — true bo'lsa javob JSON sifatida parse qilinadi
- * search   — true bo'lsa Google Search grounding yoqiladi (JSON bilan birga ishlatilmaydi)
- */
-export async function generate({ system, contents, json = false, schema, search = false, temperature = 0.7 }, retry = 1) {
+function buildBody({ system, contents, json, schema, search, temperature }) {
   const body = {
     contents: typeof contents === "string" ? [{ role: "user", parts: [{ text: contents }] }] : contents,
     generationConfig: { temperature },
@@ -77,8 +72,17 @@ export async function generate({ system, contents, json = false, schema, search 
   // Sxema berilsa model JSON tuzilishini buzolmaydi (constrained decoding)
   if (json && schema) body.generationConfig.responseSchema = schema;
   if (search) body.tools = [{ google_search: {} }];
+  return body;
+}
 
-  const data = await callModel(body);
+/**
+ * system   — tizim ko'rsatmasi (string)
+ * contents — Gemini contents massivi yoki oddiy matn
+ * json     — true bo'lsa javob JSON sifatida parse qilinadi
+ * search   — true bo'lsa Google Search grounding yoqiladi (JSON bilan birga ishlatilmaydi)
+ */
+export async function generate({ system, contents, json = false, schema, search = false, temperature = 0.7 }, retry = 1) {
+  const data = await callModel(buildBody({ system, contents, json, schema, search, temperature }));
   const text = textOf(data);
   if (!text) {
     const reason = data.promptFeedback?.blockReason;
@@ -93,6 +97,37 @@ export async function generate({ system, contents, json = false, schema, search 
     if (retry > 0) return generate({ system, contents, json, schema, search, temperature }, retry - 1);
     throw new HttpError(502, "AI javobi noto'g'ri formatda keldi, qayta urinib ko'ring");
   }
+}
+
+/* Matnni bo'laklab qaytaradi: birinchi so'zlar bir necha soniyada ko'rinadi.
+   onText(bo'lak) har kelgan bo'lakda chaqiriladi; oxirida to'liq matn va manbalar qaytadi. */
+export async function generateStream({ system, contents, search = false, temperature = 0.7 }, onText) {
+  const res = await callModel(buildBody({ system, contents, search, temperature }), { stream: true });
+  const decoder = new TextDecoder();
+  let buf = "", text = "", last = {};
+  const handle = (line) => {
+    if (!line.startsWith("data:")) return;
+    let data;
+    try { data = JSON.parse(line.slice(5)); } catch { return; }
+    const piece = rawText(data);
+    if (piece) { text += piece; onText(piece); }
+    if (data.candidates?.[0]?.groundingMetadata) last = data;
+    if (data.promptFeedback?.blockReason && !text) last = data;
+  };
+  for await (const chunk of res.body) {
+    buf += decoder.decode(chunk, { stream: true });
+    let i;
+    while ((i = buf.indexOf("\n")) >= 0) {
+      handle(buf.slice(0, i).trim());
+      buf = buf.slice(i + 1);
+    }
+  }
+  handle(buf.trim());
+  if (!text.trim()) {
+    const reason = last.promptFeedback?.blockReason;
+    throw new HttpError(502, reason ? `So'rov bloklandi: ${reason}` : "AI bo'sh javob qaytardi");
+  }
+  return { text: text.trim(), sources: sourcesOf(last) };
 }
 
 /* Model JSON ichida LaTeX'ni ko'pincha bitta "\" bilan yozadi ("\cdot", "\frac").

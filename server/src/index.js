@@ -51,9 +51,10 @@ export function createApp() {
 
 async function start() {
   assertConfig();
+  // Port darhol ochiladi (Render uyg'onishi tezroq), Mongo parallel ulanadi; so'rovlar ulanishgacha navbatda turadi
+  createApp().listen(config.port, () => console.log(`[api] http://localhost:${config.port}`));
   await mongoose.connect(config.mongoUri);
   console.log("[db] MongoDB ulandi");
-  createApp().listen(config.port, () => console.log(`[api] http://localhost:${config.port}`));
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {

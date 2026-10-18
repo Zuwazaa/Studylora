@@ -1,6 +1,41 @@
 {
   "rewrites": [
-    { "source": "/cdn/books/:path*", "destination": "https://pub-29c11e82661d4766a8c49675efbaaaec.r2.dev/:path*" },
-    { "source": "/(.*)", "destination": "/index.html" }
+    {
+      "source": "/cdn/books/:path*",
+      "destination": "https://pub-29c11e82661d4766a8c49675efbaaaec.r2.dev/:path*"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/assets/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/(logo|favicon|apple-touch-icon).png",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=604800"
+        }
+      ]
+    },
+    {
+      "source": "/cdn/books/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=604800, s-maxage=604800"
+        }
+      ]
+    }
   ]
 }

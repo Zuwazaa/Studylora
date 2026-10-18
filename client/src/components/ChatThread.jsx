@@ -76,15 +76,24 @@ export default function ChatThread({
     setImgs([]);
     setSending(true);
     try {
-      const r = await Chats.send({
+      // Javob bo'laklab keladi: birinchi so'zlar paydo bo'lishi bilan ko'rsatamiz
+      let streamed = false;
+      const r = await Chats.stream({
         id: convId || undefined, key: chatKey, text: body, images, mode, lang,
         grade: extra.grade, subject: extra.subject, difficulty: extra.difficulty, web: extra.web,
+      }, (piece) => {
+        setMessages((m) => {
+          if (!streamed) { streamed = true; return [...m, { role: "ai", text: piece, live: true }]; }
+          const last = m[m.length - 1];
+          return [...m.slice(0, -1), { ...last, text: last.text + piece }];
+        });
       });
-      setMessages((m) => [...m, { role: "ai", text: r.content, skills: r.skills, sources: r.sources }]);
+      const done = { role: "ai", text: r.content, skills: r.skills, sources: r.sources };
+      setMessages((m) => (streamed ? [...m.slice(0, -1), done] : [...m, done]));
       if (!convId) { skipLoad.current = r.id; onConv?.(r.id, r.title); }
     } catch (e) {
       toast(errText(e), "error");
-      setMessages((m) => m.slice(0, -1));
+      setMessages((m) => m.slice(0, m[m.length - 1]?.live ? -2 : -1));
       setText(body);
       setImgs(images);
     } finally {
@@ -161,7 +170,7 @@ export default function ChatThread({
             </div>
           </div>
         ))}
-        {sending && (
+        {sending && !messages[messages.length - 1]?.live && (
           <div className="msg ai">
             <span className="msg-av"><LogoMark size={30} /></span>
             <div className="bubble"><Typing /></div>

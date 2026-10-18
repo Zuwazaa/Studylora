@@ -1,5 +1,6 @@
 import SubjectPicker from "../components/SubjectPicker";
-import { useCallback, useEffect, useRef, useState } from "react";
+import BookLoader from "../components/BookLoader";
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Plus, Trash2, Upload, FileText, Globe2, MessagesSquare, X, Lightbulb, MessageCircleQuestion, NotebookPen, Presentation, Target, Repeat } from "lucide-react";
 import { Chats, Courses } from "../api/client";
@@ -8,7 +9,9 @@ import ChatThread from "../components/ChatThread";
 import { usePedagogy } from "../components/SkillChips";
 import SkillIcon from "../components/SkillIcon";
 import { GRADES, subjectsOf } from "../data/catalog";
-import BookReader from "../components/BookReader";
+
+// PDF o'quvchi og'ir (pdf.js): faqat kitob ochilganda yuklanadi
+const BookReader = lazy(() => import("../components/BookReader"));
 
 const MODE_ORDER = ["explain", "socratic", "homework", "feynman", "exam", "revision"];
 
@@ -110,6 +113,7 @@ export default function Teacher() {
     const course = courses.find((c) => c.id === courseId);
     if (!course) return <div className="center" style={{ padding: 60 }}><span className="spinner lg" /></div>;
     return (
+      <Suspense fallback={<div className="page-boot"><BookLoader /></div>}>
       <BookReader
         title={course.title}
         pdfUrl={course.fileUrl}
@@ -118,6 +122,7 @@ export default function Teacher() {
         courseId={course.id}
         onBack={() => nav("/app/ustoz")}
       />
+      </Suspense>
     );
   }
 

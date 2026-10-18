@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { ChevronRight, ClipboardCheck } from "lucide-react";
 import { useApp } from "../context/AppContext";
@@ -5,9 +6,10 @@ import { GRADES, subjectsOf, bookKey } from "../data/catalog";
 import { useBooks } from "../lib/useBooks";
 import { PageHead } from "../components/Layout";
 import SubjectIcon from "../components/SubjectIcon";
-import BookReader from "../components/BookReader";
 import Iso from "../components/Iso";
 import BookLoader from "../components/BookLoader";
+
+const BookReader = lazy(() => import("../components/BookReader"));
 
 export default function Library() {
   const { t, lang, user } = useApp();
@@ -40,6 +42,7 @@ export default function Library() {
       );
     }
     return (
+      <Suspense fallback={<div className="page-boot"><BookLoader /></div>}>
       <BookReader
         key={key}
         title={`${subj[lang]} · ${t("grade.n", { n: grade })}`}
@@ -51,6 +54,7 @@ export default function Library() {
         intro={t("reader.introBook", { subject: subj[lang] })}
         onBack={() => nav(`/app/darsliklar/${grade}`)}
       />
+      </Suspense>
     );
   }
 

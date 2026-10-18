@@ -67,7 +67,48 @@ export const Me = {
   deleteMistake: (id) => api(`/me/mistakes/${id}`, { method: "DELETE" }),
 };
 
+/* AI javobini bo'laklab o'qish (SSE). onText(bo'lak) har bo'lakda, oxirida yakuniy obyekt qaytadi. */
+export async function apiStream(path, body, onText) {
+  const token = getToken();
+  let res;
+  try {
+    res = await fetch(`${API_ORIGIN}/api${path}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+      body: JSON.stringify({ ...body, stream: true }),
+    });
+  } catch {
+    throw new ApiError("network", 0);
+  }
+  if (!res.ok || !res.body) {
+    const data = await res.json().catch(() => ({}));
+    if (res.status === 401 && token) onUnauthorized();
+    throw new ApiError(data.error || `http_${res.status}`, res.status);
+  }
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buf = "", final = null;
+  for (;;) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    buf += decoder.decode(value, { stream: true });
+    let i;
+    while ((i = buf.indexOf("\n\n")) >= 0) {
+      const line = buf.slice(0, i).trim();
+      buf = buf.slice(i + 2);
+      if (!line.startsWith("data:")) continue;
+      const ev = JSON.parse(line.slice(5));
+      if (ev.t) onText(ev.t);
+      else if (ev.error) throw new ApiError(ev.error, 502);
+      else if (ev.done) final = ev;
+    }
+  }
+  if (!final) throw new ApiError("network", 0);
+  return final;
+}
+
 export const Chats = {
+  stream: (b, onText) => apiStream("/chats/send", b, onText),
   list: (key) => api(`/chats${key ? `?key=${encodeURIComponent(key)}` : ""}`),
   get: (id) => api(`/chats/${id}`),
   send: (b) => api("/chats/send", { method: "POST", body: b }),

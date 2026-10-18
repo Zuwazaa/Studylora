@@ -4,7 +4,7 @@ import Conversation from "../models/Conversation.js";
 import Attachment from "../models/Attachment.js";
 import BookText from "../models/BookText.js";
 import { requireAuth, userLimit } from "../middleware/auth.js";
-import { generate, imagePart } from "../lib/gemini.js";
+import { generate, generateStream, imagePart } from "../lib/gemini.js";
 import { retrieve } from "../lib/rag.js";
 import { ensureBook } from "../lib/books.js";
 import { activity } from "../lib/userdata.js";
@@ -165,7 +165,27 @@ router.post("/send", perMinute, perDay, async (req, res) => {
     subject: String(b.subject || "").slice(0, 80),
     difficulty: b.difficulty,
   });
-  const result = await generate({ system, contents, search: Boolean(b.web), temperature: 0.7 });
+  const ask = { system, contents, search: Boolean(b.web), temperature: 0.7 };
+
+  /* stream: true bo'lsa javob SSE bilan bo'laklab yuboriladi ("data: {t}" ... "data: {done}"),
+     shunda birinchi so'zlar butun javobni kutmasdan ko'rinadi. */
+  if (b.stream) {
+    res.set({ "Content-Type": "text/event-stream; charset=utf-8", "Cache-Control": "no-cache, no-transform", "X-Accel-Buffering": "no" });
+    res.flushHeaders();
+    const event = (obj) => res.write(`data: ${JSON.stringify(obj)}\n\n`);
+    try {
+      const result = await generateStream(ask, (t) => event({ t }));
+      event({ done: true, ...(await saveTurn(result)) });
+    } catch (e) {
+      console.warn("[chat] stream:", e.message);
+      event({ error: e.status && e.status < 500 ? e.message : "ai_failed" });
+    }
+    return res.end();
+  }
+
+  res.json(await saveTurn(await generate(ask)));
+
+  async function saveTurn(result) {
 
   // Javob muvaffaqiyatli bo'lgandan keyingina saqlaymiz
   const saved = images.length
@@ -189,8 +209,8 @@ router.post("/send", perMinute, perDay, async (req, res) => {
     });
   }
   activity(req.userId, "chat").catch(() => {});
-
-  res.json({ id: String(convo._id), title: convo.title, content: result.text, skills, sources: result.sources, mode });
+  return { id: String(convo._id), title: convo.title, content: result.text, skills, sources: result.sources, mode };
+  }
 });
 
 export default router;

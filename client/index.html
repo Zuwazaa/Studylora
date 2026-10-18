@@ -10,9 +10,14 @@
     <link rel="preconnect" href="https://studylora-api.onrender.com" crossorigin />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400;1,9..144,500&family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="preload" as="image" href="/logo.png" />
+    <!-- Shriftlar sahifani to'xtatmaydi: matn darhol chiqadi, shrift kelganda almashadi -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..600;1,9..144,400..500&family=Manrope:wght@300..800&display=swap" onload="this.onload=null;this.rel='stylesheet'" />
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..600;1,9..144,400..500&family=Manrope:wght@300..800&display=swap" /></noscript>
     <title>Studylora</title>
     <style>body { background: #f1f3f2; }</style>
+    <!-- Bepul serverni JS yuklanayotgan paytdayoq uyg'otamiz -->
+    <script>if (location.hostname !== "localhost") fetch("https://studylora-api.onrender.com/api/health", { mode: "no-cors" }).catch(function () {});</script>
   </head>
   <body>
     <div id="root"></div>

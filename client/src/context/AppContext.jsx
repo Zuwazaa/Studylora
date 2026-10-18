@@ -7,13 +7,32 @@ export const useApp = () => useContext(AppContext);
 
 const read = (k, d) => { try { return localStorage.getItem(k) ?? d; } catch { return d; } };
 const write = (k, v) => { try { localStorage.setItem(k, v); } catch { /* ignore */ } };
+const drop = (k) => { try { localStorage.removeItem(k); } catch { /* ignore */ } };
+
+// Oxirgi foydalanuvchi va uning ma'lumotlari keshda turadi: sayt server uyg'onishini kutmasdan darhol ochiladi
+const cached = (k) => { try { return getToken() ? JSON.parse(localStorage.getItem(k) || "null") : null; } catch { return null; } };
+const USER_KEY = "studylora.user", DATA_KEY = "studylora.data";
 
 export function AppProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const [booting, setBooting] = useState(Boolean(getToken()));
+  const [user, setUserState] = useState(() => cached(USER_KEY));
+  const [booting, setBooting] = useState(() => Boolean(getToken()) && !cached(USER_KEY));
   const [lang, setLangState] = useState(() => (read("studylora.lang", "uz") === "ru" ? "ru" : "uz"));
   const [theme, setThemeState] = useState(() => read("studylora.theme", "light"));
-  const [data, setData] = useState(null);
+  const [data, setDataState] = useState(() => cached(DATA_KEY));
+  const setUser = useCallback((u) => {
+    setUserState((prev) => {
+      const next = typeof u === "function" ? u(prev) : u;
+      next ? write(USER_KEY, JSON.stringify(next)) : drop(USER_KEY);
+      return next;
+    });
+  }, []);
+  const setData = useCallback((d) => {
+    setDataState((prev) => {
+      const next = typeof d === "function" ? d(prev) : d;
+      next ? write(DATA_KEY, JSON.stringify(next)) : drop(DATA_KEY);
+      return next;
+    });
+  }, []);
   const [toasts, setToasts] = useState([]);
 
   const t = useCallback(
@@ -43,21 +62,23 @@ export function AppProvider({ children }) {
     setToken(null);
     setUser(null);
     setData(null);
-  }, []);
+  }, [setUser, setData]);
 
   useEffect(() => setUnauthorizedHandler(logout), [logout]);
 
   const refresh = useCallback(async () => {
     try { setData(await Me.data()); } catch { /* jim */ }
-  }, []);
+  }, [setData]);
 
+  // Profil va ma'lumotlar parallel so'raladi; tarmoq xatosida keshdagi foydalanuvchi qoladi
   useEffect(() => {
     if (!getToken()) return;
+    refresh();
     Auth.me()
-      .then((r) => { setUser(r.user); refresh(); })
-      .catch(() => setToken(null))
+      .then((r) => setUser(r.user))
+      .catch((e) => { if (e?.status === 401 || !cached(USER_KEY)) logout(); })
       .finally(() => setBooting(false));
-  }, [refresh]);
+  }, [refresh, setUser, logout]);
 
   const setLang = useCallback((l) => {
     setLangState(l);
