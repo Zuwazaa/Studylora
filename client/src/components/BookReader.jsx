@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, ScanLine, ClipboardCheck, Layers3, Plus, MessagesSquare, ArrowLeft } from "lucide-react";
+import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, ScanLine, ClipboardCheck, Layers3, Plus, MessagesSquare, ArrowLeft, X, Sparkles } from "lucide-react";
 import * as pdfjsLib from "pdfjs-dist";
 import pdfjsWorker from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 import { Chats, Me, getToken, apiUrl } from "../api/client";
@@ -47,7 +47,9 @@ export default function BookReader({ title, pdfUrl, chatKey, intro, grade, subje
   const [atts, setAtts] = useState([]);
   const [convs, setConvs] = useState([]);
   const [convId, setConvId] = useState(null);
-  const [tab, setTab] = useState("chat"); // mobil: pdf | chat
+  const [tab, setTab] = useState("pdf"); // mobil: pdf | chat
+  // AI paneli faqat belgilanganda (yoki tugma bosilganda) ochiladi
+  const [chatOpen, setChatOpen] = useState(false);
 
   // PDF yuklash
   useEffect(() => {
@@ -55,7 +57,14 @@ export default function BookReader({ title, pdfUrl, chatKey, intro, grade, subje
     setStatus("loading");
     // Yuklangan kitoblar faqat egasiga beriladi — token bilan so'raymiz
     const token = getToken();
-    const task = pdfjsLib.getDocument({ url: apiUrl(pdfUrl), httpHeaders: token ? { Authorization: `Bearer ${token}` } : undefined });
+    // Range so'rovlar: butun faylni kutmasdan faqat kerakli betlar yuklanadi
+    const task = pdfjsLib.getDocument({
+      url: apiUrl(pdfUrl),
+      httpHeaders: token ? { Authorization: `Bearer ${token}` } : undefined,
+      disableAutoFetch: true,
+      disableStream: true,
+      rangeChunkSize: 262144,
+    });
     task.promise
       .then((doc) => {
         if (!on) return;
@@ -107,6 +116,8 @@ export default function BookReader({ title, pdfUrl, chatKey, intro, grade, subje
       const task = pg.render({ canvasContext: canvas.getContext("2d"), viewport: vp, transform: [dpr, 0, 0, dpr, 0, 0] });
       renderRef.current = task;
       await task.promise.catch(() => {});
+      // Keyingi betni oldindan tayyorlab qo'yamiz
+      if (!cancelled && page < doc.numPages) doc.getPage(page + 1).catch(() => {});
     })();
     try { localStorage.setItem(storeKey, String(page)); } catch { /* ignore */ }
     setPageInput(String(page));
@@ -162,6 +173,7 @@ export default function BookReader({ title, pdfUrl, chatKey, intro, grade, subje
     out.getContext("2d").drawImage(canvas, r.x * k, r.y * k, r.w * k, r.h * k, 0, 0, out.width, out.height);
     setAtts((a) => [...a, { image: out.toDataURL("image/jpeg", 0.9), page }]);
     setSelecting(false);
+    setChatOpen(true);
     setTab("chat");
   };
 
@@ -169,17 +181,18 @@ export default function BookReader({ title, pdfUrl, chatKey, intro, grade, subje
   const cardsHere = () => nav("/app/kartochkalar", { state: { preset: { grade, subject, bookKey, courseId, from: page, to: Math.min(numPages, page + 3) } } });
 
   return (
-    <div className={`reader tab-${tab}`}>
+    <div className={`reader tab-${tab}${chatOpen ? " chat-open" : ""}`}>
       <div className="reader-top">
         <button className="btn btn-ghost sm" onClick={onBack}><ArrowLeft size={16} />{t("reader.back")}</button>
         <b className="reader-title">{title}</b>
-        <div className="reader-tabs seg">
+        {chatOpen && <div className="reader-tabs seg">
           <button className={tab === "pdf" ? "on" : ""} onClick={() => setTab("pdf")}>{t("reader.book")}</button>
           <button className={tab === "chat" ? "on" : ""} onClick={() => setTab("chat")}>{t("reader.chat")}</button>
-        </div>
+        </div>}
         <div className="row wrap reader-actions">
           <button className="btn btn-soft sm" onClick={testHere}><ClipboardCheck size={16} />{t("reader.testHere")}</button>
           <button className="btn btn-soft sm" onClick={cardsHere}><Layers3 size={16} />{t("reader.cardsHere")}</button>
+          {!chatOpen && <button className="btn btn-soft sm" onClick={() => { setChatOpen(true); setTab("chat"); }}><Sparkles size={16} />{t("reader.askAi")}</button>}
         </div>
       </div>
 
@@ -211,7 +224,7 @@ export default function BookReader({ title, pdfUrl, chatKey, intro, grade, subje
           </div>
         </section>
 
-        <section className="reader-chat card">
+        {chatOpen && <section className="reader-chat card">
           <div className="rc-head">
             <MessagesSquare size={17} />
             <select className="select sm grow" value={convId || ""} onChange={(e) => setConvId(e.target.value || null)}>
@@ -219,6 +232,7 @@ export default function BookReader({ title, pdfUrl, chatKey, intro, grade, subje
               {convs.map((c) => <option key={c.id} value={c.id}>{c.title}</option>)}
             </select>
             <button className="icon-btn" onClick={() => setConvId(null)} title={t("reader.newChat")}><Plus size={18} /></button>
+            <button className="icon-btn" onClick={() => { setChatOpen(false); setTab("pdf"); }} title={t("reader.closeAi")}><X size={18} /></button>
           </div>
           <ChatThread
             compact
@@ -232,7 +246,7 @@ export default function BookReader({ title, pdfUrl, chatKey, intro, grade, subje
             attachments={atts}
             setAttachments={setAtts}
           />
-        </section>
+        </section>}
       </div>
     </div>
   );

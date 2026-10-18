@@ -67,7 +67,7 @@ export async function pipeObject(key, req, res) {
   res.set({
     "Content-Type": obj.ContentType || "application/pdf",
     "Accept-Ranges": "bytes",
-    "Cache-Control": "private, max-age=3600",
+    "Cache-Control": key.startsWith("books/") ? "public, max-age=604800" : "private, max-age=3600",
     ...(obj.ContentLength != null ? { "Content-Length": String(obj.ContentLength) } : {}),
     ...(obj.ContentRange ? { "Content-Range": obj.ContentRange } : {}),
   });

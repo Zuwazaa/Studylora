@@ -123,7 +123,9 @@
 .reader-title { font-size: 16px; }
 .reader-actions { margin-left: auto; }
 .reader-tabs { display: none; }
-.reader-body { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(340px, 1fr); gap: 12px; }
+.reader-body { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+.reader.chat-open .reader-body { grid-template-columns: minmax(0, 1.25fr) minmax(340px, 1fr); }
+.reader-chat { animation: fadeUp .25s ease; }
 .reader-pdf, .reader-chat { padding: 0; display: flex; flex-direction: column; overflow: hidden; }
 .pdf-bar { display: flex; align-items: center; gap: 6px; padding: 8px 10px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
 .page-input { width: 58px; height: 34px; text-align: center; padding: 0 6px; border-radius: 10px; }
@@ -320,7 +322,7 @@
   .t-scrim { display: block; position: fixed; inset: 0; z-index: 55; background: rgba(15,42,37,.4); }
   .mode-skills { display: none; }
   .reader { height: calc(100vh - 68px - 24px); }
-  .reader-body { grid-template-columns: 1fr; }
+  .reader-body, .reader.chat-open .reader-body { grid-template-columns: 1fr; }
   .reader-tabs { display: inline-flex; }
   .reader.tab-chat .reader-pdf { display: none; }
   .reader.tab-pdf .reader-chat { display: none; }

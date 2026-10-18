@@ -80,13 +80,35 @@ export async function readBook(bookKey) {
 }
 
 /** HTTP javobga darslik PDF'ini beradi (Range bilan) */
+const copying = new Set();
+function copyInBackground(bookKey) {
+  if (!r2Enabled() || copying.has(bookKey)) return;
+  copying.add(bookKey);
+  readBook(bookKey).catch(() => {}).finally(() => copying.delete(bookKey));
+}
+
 export async function sendBook(bookKey, req, res) {
   const item = (await getManifest())[bookKey];
   if (!item) throw new HttpError(404, "book_not_found");
   if (r2Enabled() && (await pipeObject(PREFIX + item.file, req, res))) return;
-  // Hali ko'chirilmagan: butun faylni olib beramiz (va fonda nusxalaymiz)
-  const buf = await readBook(bookKey);
-  res.set({ "Content-Type": "application/pdf", "Cache-Control": "public, max-age=86400" }).send(buf);
+  if (!item.legacy) throw new HttpError(404, "book_not_found");
+
+  // Hali ko'chirilmagan: eski bucketdan Range bilan oqim qilib beramiz (butun faylni kutmasdan),
+  // nusxalash esa fonda bir marta bajariladi.
+  copyInBackground(bookKey);
+  const range = /^bytes=\d*-\d*$/.test(req.headers.range || "") ? req.headers.range : undefined;
+  const r = await fetch(item.legacy, range ? { headers: { Range: range } } : undefined);
+  if (!r.ok || !r.body) throw new HttpError(502, `PDF yuklanmadi (HTTP ${r.status})`);
+  res.status(r.status === 206 ? 206 : 200);
+  res.set({ "Content-Type": "application/pdf", "Accept-Ranges": "bytes", "Cache-Control": "public, max-age=604800" });
+  for (const h of ["content-length", "content-range"]) if (r.headers.get(h)) res.set(h, r.headers.get(h));
+  const { Readable } = await import("node:stream");
+  await new Promise((resolve, reject) => {
+    const body = Readable.fromWeb(r.body);
+    body.on("error", reject);
+    res.on("close", resolve);
+    body.pipe(res);
+  });
 }
 
 /* ---------- PDF matnini ajratish ---------- */
