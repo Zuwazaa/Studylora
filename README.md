@@ -26,15 +26,14 @@ Testlar: `cd server && npm test`.
 
 ## Deploy
 
-**Backend (Render, Web Service)**
-- Root directory: `server`
-- Build: `npm install`, Start: `npm start`
-- Environment: `.env.example` dagi barcha o'zgaruvchilar. `CLIENT_ORIGIN` ga Vercel manzilini yozing.
+**Backend (Render)**
+- Render → New → Blueprint → shu repo. `render.yaml` hammasini sozlaydi, faqat yashirin kalitlarni (Mongo, Gemini, R2) so'raydi.
+- `CLIENT_ORIGIN` Vercel manziliga teng bo'lishi kerak.
 - MongoDB Atlas → Network Access'da `0.0.0.0/0` ruxsat bo'lishi kerak.
 
 **Frontend (Vercel)**
 - Root directory: `client`, framework: Vite
-- `client/vercel.json` dagi `/api` rewrite manzilini Render manziliga almashtiring.
+- Environment: `VITE_API_URL=https://<render-manzil>` (sayt API'ga to'g'ridan-to'g'ri murojaat qiladi).
 
 ## Muhim eslatmalar
 

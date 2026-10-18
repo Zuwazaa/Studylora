@@ -15,13 +15,14 @@ import pedagogyRoutes from "./routes/pedagogy.js";
 export function createApp() {
   const app = express();
   app.set("trust proxy", 1); // Render/Vercel proksisi orqasida — rate-limit to'g'ri IP ko'radi
-  app.use(helmet());
+  app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
+  // Vercel preview manzillari (studylora-*.vercel.app) ham ruxsat etiladi
+  const preview = /^https:\/\/studylora[a-z0-9-]*\.vercel\.app$/;
   app.use(
     cors({
-      origin: (origin, cb) => {
-        const ok = !origin || config.clientOrigins.includes("*") || config.clientOrigins.includes(origin);
-        cb(ok ? null : new Error("CORS"), ok);
-      },
+      origin: (origin, cb) =>
+        cb(null, !origin || config.clientOrigins.includes("*") || config.clientOrigins.includes(origin) || preview.test(origin)),
+      exposedHeaders: ["Content-Range", "Accept-Ranges", "Content-Length"],
     })
   );
   app.use(express.json({ limit: "40mb" }));

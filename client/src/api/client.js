@@ -1,4 +1,6 @@
-// Backend bilan ishlash. Barcha so'rovlar /api ga ketadi (Vite proxy yoki Vercel rewrite).
+// Backend bilan ishlash. Lokalda /api Vite proxy orqali, prodda VITE_API_URL (Render) ga to'g'ridan-to'g'ri.
+export const API_ORIGIN = (import.meta.env.VITE_API_URL || "").replace(/\/$/, "");
+export const apiUrl = (p) => (p && p.startsWith("/api") ? API_ORIGIN + p : p);
 const TOKEN_KEY = "studylora.token";
 
 export const getToken = () => {
@@ -23,7 +25,7 @@ export async function api(path, { method = "GET", body, signal } = {}) {
   const token = getToken();
   let res;
   try {
-    res = await fetch(`/api${path}`, {
+    res = await fetch(`${API_ORIGIN}/api${path}`, {
       method,
       signal,
       headers: {
@@ -82,7 +84,7 @@ export const Courses = {
   remove: (id) => api(`/courses/${id}`, { method: "DELETE" }),
   // PDF server orqali yopiq bucketga yuklanadi
   async upload(file, title) {
-    const res = await fetch(`/api/courses?${new URLSearchParams({ title, fileName: file.name })}`, {
+    const res = await fetch(`${API_ORIGIN}/api/courses?${new URLSearchParams({ title, fileName: file.name })}`, {
       method: "POST",
       headers: { "Content-Type": "application/pdf", Authorization: `Bearer ${getToken()}` },
       body: file,

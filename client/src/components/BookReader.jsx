@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, ScanLine, ClipboardCheck, Layers3, Plus, MessagesSquare, ArrowLeft } from "lucide-react";
 import * as pdfjsLib from "pdfjs-dist";
 import pdfjsWorker from "pdfjs-dist/build/pdf.worker.min.mjs?url";
-import { Chats, Me, getToken } from "../api/client";
+import { Chats, Me, getToken, apiUrl } from "../api/client";
 import { useApp } from "../context/AppContext";
 import ChatThread from "./ChatThread";
 
@@ -54,7 +54,7 @@ export default function BookReader({ title, pdfUrl, chatKey, intro, grade, subje
     setStatus("loading");
     // Yuklangan kitoblar faqat egasiga beriladi — token bilan so'raymiz
     const token = getToken();
-    const task = pdfjsLib.getDocument({ url: pdfUrl, httpHeaders: token ? { Authorization: `Bearer ${token}` } : undefined });
+    const task = pdfjsLib.getDocument({ url: apiUrl(pdfUrl), httpHeaders: token ? { Authorization: `Bearer ${token}` } : undefined });
     task.promise
       .then((doc) => {
         if (!on) return;
