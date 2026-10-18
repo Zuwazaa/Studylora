@@ -16,6 +16,7 @@ const Mistakes = lazy(() => import("./pages/Mistakes"));
 const Progress = lazy(() => import("./pages/Progress"));
 const Methods = lazy(() => import("./pages/Methods"));
 const Settings = lazy(() => import("./pages/Settings"));
+const Lab = lazy(() => import("./pages/Lab"));
 
 const Spinner = () => <div className="center" style={{ padding: 80 }}><span className="spinner lg" /></div>;
 
@@ -47,6 +48,8 @@ export default function App() {
           <Route path="kartochkalar" element={<Flashcards />} />
           <Route path="xatolar" element={<Mistakes />} />
           <Route path="natijalar" element={<Progress />} />
+          <Route path="laboratoriya" element={<Lab />} />
+          <Route path="laboratoriya/:expId" element={<Lab />} />
           <Route path="metodika" element={<Methods />} />
           <Route path="sozlamalar" element={<Settings />} />
           <Route path="*" element={<Navigate to="/app" replace />} />
