@@ -19,6 +19,7 @@ const pages = {
   Methods: () => import("./pages/Methods"),
   Settings: () => import("./pages/Settings"),
   Lab: () => import("./pages/Lab"),
+  Admin: () => import("./pages/Admin"),
 };
 const Teacher = lazy(pages.Teacher);
 const Library = lazy(pages.Library);
@@ -29,6 +30,7 @@ const Progress = lazy(pages.Progress);
 const Methods = lazy(pages.Methods);
 const Settings = lazy(pages.Settings);
 const Lab = lazy(pages.Lab);
+const Admin = lazy(pages.Admin);
 
 function usePrefetchPages(enabled) {
   useEffect(() => {
@@ -80,6 +82,7 @@ export default function App() {
           <Route path="laboratoriya/:expId" element={<Lab />} />
           <Route path="metodika" element={<Methods />} />
           <Route path="sozlamalar" element={<Settings />} />
+          <Route path="admin" element={<Admin />} />
           <Route path="*" element={<Navigate to="/app" replace />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />

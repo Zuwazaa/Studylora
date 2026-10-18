@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
 import rateLimit from "express-rate-limit";
 import { config } from "../config.js";
+import User from "../models/User.js";
 
 export function requireAuth(req, res, next) {
   const header = req.headers.authorization || "";
@@ -19,3 +20,13 @@ export const signToken = (userId) => jwt.sign({ sub: String(userId) }, config.jw
 // Foydalanuvchi bo'yicha tezlik cheklovi
 export const userLimit = (windowMs, max, error = "too_many_requests") =>
   rateLimit({ windowMs, max, keyGenerator: (req) => req.userId, message: { error }, standardHeaders: true, legacyHeaders: false });
+
+export const isAdminEmail = (email) => Boolean(email) && config.adminEmails.includes(String(email).toLowerCase());
+
+// Faqat ADMIN_EMAILS ro'yxatidagilar. Boshqalarga 404 — panel borligi oshkor qilinmaydi.
+export async function requireAdmin(req, res, next) {
+  const user = await User.findById(req.userId).select("email");
+  if (!user || !isAdminEmail(user.email)) return res.status(404).json({ error: "not_found" });
+  req.admin = user;
+  next();
+}

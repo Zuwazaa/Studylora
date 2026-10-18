@@ -61,6 +61,9 @@ export async function getManifest() {
   return books;
 }
 
+/** Keshni tozalaydi (admin yangi kitob yuklaganda) */
+export const resetManifest = () => { manifest = { at: 0, books: {} }; };
+
 /** Darslik PDF'i (Buffer). Yangi bucketda bo'lmasa — eski manbadan olib, bucketga nusxalaydi. */
 export async function readBook(bookKey) {
   const item = (await getManifest())[bookKey];

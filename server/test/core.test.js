@@ -108,3 +108,21 @@ test("AI JSON: LaTeX backslashes are repaired", async () => {
   assert.equal(o.a, String.raw`$x \cdot y = \frac{1}{2}$, $a \neq b$`);
   assert.equal(o.b, "1\n2 \\sqrt{2} é");
 });
+
+test("Admin: faqat ADMIN_EMAILS dagilar, panel tokensiz yopiq", async () => {
+  const { config } = await import("../src/config.js");
+  const { isAdminEmail } = await import("../src/middleware/auth.js");
+  const { createApp } = await import("../src/index.js");
+  config.adminEmails = ["boss@studylora.uz"];
+  assert.equal(isAdminEmail("Boss@Studylora.uz"), true);
+  assert.equal(isAdminEmail("student@studylora.uz"), false);
+  assert.equal(isAdminEmail(""), false);
+
+  const server = createApp().listen(0);
+  try {
+    const r = await fetch(`http://127.0.0.1:${server.address().port}/api/admin/stats`);
+    assert.equal(r.status, 401);
+  } finally {
+    server.close();
+  }
+});

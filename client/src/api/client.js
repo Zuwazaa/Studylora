@@ -157,3 +157,20 @@ export const Cards = {
 export const Pedagogy = { get: () => api("/pedagogy") };
 
 export const Lab = { ask: (b) => api("/lab/ask", { method: "POST", body: b }) };
+
+export const Admin = {
+  stats: () => api("/admin/stats"),
+  users: (q, page, signal) => api(`/admin/users?${new URLSearchParams({ q, page })}`, { signal }),
+  books: (refresh) => api(`/admin/books${refresh ? "?refresh=1" : ""}`),
+  async uploadBook(key, file) {
+    const res = await fetch(`${API_ORIGIN}/api/admin/books/${encodeURIComponent(key)}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/pdf", Authorization: `Bearer ${getToken()}` },
+      body: file,
+    }).catch(() => null);
+    if (!res) throw new ApiError("network", 0);
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new ApiError(data.error || (res.status === 413 ? "too_big" : "upload_failed"), res.status);
+    return data;
+  },
+};

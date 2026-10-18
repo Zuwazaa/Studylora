@@ -30,6 +30,9 @@ export const config = {
     from: process.env.MAIL_USER || "",
   },
 
+  // Admin panelga kira oladigan emaillar, vergul bilan
+  adminEmails: list(process.env.ADMIN_EMAILS).map((e) => e.toLowerCase()),
+
   limits: {
     chatPerDay: Number(process.env.DAILY_LIMIT) || 100,
     quizPerDay: Number(process.env.QUIZ_DAILY_LIMIT) || 40,
