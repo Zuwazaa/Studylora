@@ -2,6 +2,9 @@
 .logo { display: inline-flex; align-items: center; gap: 10px; font-weight: 800; letter-spacing: .16em; font-size: 15px; color: var(--green); }
 .logo.light { color: #fff; }
 :root[data-theme="dark"] .logo { color: #fff; }
+.logo-mark { display: block; border-radius: 24%; flex-shrink: 0; }
+.logo-word b { font-weight: inherit; color: var(--yellow-600); }
+.logo.light .logo-word b, :root[data-theme="dark"] .logo-word b { color: var(--yellow); }
 
 .lang-switch { display: inline-flex; padding: 3px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); }
 .lang-switch button { height: 28px; min-width: 36px; padding: 0 8px; border-radius: 999px; font-size: 12px; font-weight: 800; color: var(--muted); letter-spacing: .04em; }
