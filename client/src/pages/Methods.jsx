@@ -7,6 +7,7 @@ import { PageHead } from "../components/Layout";
 
 const WHERE = {
   chat: "methods.where.chat", quiz: "methods.where.quiz", flashcards: "methods.where.cards", mistakes: "methods.where.mistakes",
+  lab: "methods.where.lab",
 };
 const whereOf = (usedIn) => [...new Set(usedIn.map((u) => u.split(":")[0]))].filter((w) => WHERE[w]);
 

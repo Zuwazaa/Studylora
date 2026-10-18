@@ -86,3 +86,17 @@ test("Qiyin daraja: avval Google Search bilan internet materiali olinadi", async
   assert.equal(r.sources[0].url, "https://example.org/olimp");
   assert.equal(r.questions[0].source, "internet");
 });
+
+test("Laboratoriya: POE ko'rsatmasi bashorat, o'lchovlar va skillarni o'z ichiga oladi", async () => {
+  const { labSystemPrompt, LAB_SKILLS, SKILL_BY_ID } = await import("../src/pedagogy/skills.js");
+  for (const ids of Object.values(LAB_SKILLS)) for (const id of ids) assert.ok(SKILL_BY_ID[id], id);
+  const p = labSystemPrompt({
+    lang: "uz", kind: "explain",
+    experiment: { title: "Mayatnik", subject: "Fizika", goal: "Davr" },
+    state: "L: 1 m", prediction: { text: "2 marta", correct: true }, records: ["L: 1; T: 2.0"],
+  });
+  assert.match(p, /Predict-Observe-Explain/);
+  assert.match(p, /CORRECT/);
+  assert.match(p, /1\. L: 1; T: 2.0/);
+  assert.match(p, /MISCONCEPTION|misconception/i);
+});

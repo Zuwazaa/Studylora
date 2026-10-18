@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, GraduationCap, BookMarked, ClipboardCheck, Layers3, AlertCircle, BarChart3, Sparkles,
-  Settings, LogOut, Moon, Sun, Menu, X, Flame,
+  Settings, LogOut, Moon, Sun, Menu, X, Flame, FlaskConical,
 } from "lucide-react";
 import { useApp } from "../context/AppContext";
 import Logo from "./Logo";
@@ -14,6 +14,7 @@ const NAV = [
   { to: "/app/testlar", icon: ClipboardCheck, key: "nav.tests" },
   { to: "/app/kartochkalar", icon: Layers3, key: "nav.cards" },
   { to: "/app/xatolar", icon: AlertCircle, key: "nav.mistakes", badge: "mistakes" },
+  { to: "/app/laboratoriya", icon: FlaskConical, key: "nav.lab" },
   { to: "/app/natijalar", icon: BarChart3, key: "nav.progress" },
   { to: "/app/metodika", icon: Sparkles, key: "nav.methods" },
 ];

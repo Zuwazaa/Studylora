@@ -114,3 +114,5 @@ export const Cards = {
 };
 
 export const Pedagogy = { get: () => api("/pedagogy") };
+
+export const Lab = { ask: (b) => api("/lab/ask", { method: "POST", body: b }) };

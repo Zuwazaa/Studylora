@@ -26,7 +26,7 @@ export const SKILLS = [
     },
     prompt:
       "SOCRATIC METHOD: Do not hand over the final answer immediately. First ask what the student already knows or thinks. Then guide with ONE focused question at a time that moves them one step closer. If they are stuck after two attempts, give a smaller sub-question. Only confirm and summarise once they reach the answer themselves.",
-    usedIn: ["chat:socratic", "chat:homework"],
+    usedIn: ["chat:socratic", "chat:homework", "lab"],
   },
   {
     id: "scaffolding",
@@ -115,7 +115,7 @@ export const SKILLS = [
     },
     prompt:
       "EFFECTIVE FEEDBACK (Hattie & Timperley): Feedback must answer three questions: Where am I going (the goal)? How am I going (what is right / what is wrong and WHY)? Where to next (one concrete action)? Praise the process and strategy, never only the person.",
-    usedIn: ["quiz", "chat:explain", "chat:feynman"],
+    usedIn: ["quiz", "chat:explain", "chat:feynman", "lab"],
   },
   {
     id: "growth",
@@ -187,7 +187,7 @@ export const SKILLS = [
     },
     prompt:
       "MISCONCEPTION DIAGNOSIS: Every wrong option must represent a real, common student misconception for this topic (not random filler). For each wrong option write one sentence naming the misconception and why it is wrong.",
-    usedIn: ["quiz", "mistakes"],
+    usedIn: ["quiz", "mistakes", "lab"],
   },
   {
     id: "mastery",
@@ -223,7 +223,7 @@ export const SKILLS = [
     },
     prompt:
       "METACOGNITION: Occasionally ask the student how confident they are and what strategy they used. Encourage them to plan, monitor and reflect on their own learning.",
-    usedIn: ["quiz", "chat:revision"],
+    usedIn: ["quiz", "chat:revision", "lab"],
   },
   {
     id: "dual",
@@ -241,7 +241,7 @@ export const SKILLS = [
     },
     prompt:
       "DUAL CODING (Paivio, Mayer): Where it helps, pair words with a visual structure: a markdown table for comparisons, a numbered list for processes, LaTeX for formulas ($...$ or $$...$$), or a simple text diagram. Do not decorate; use visuals only when they reduce effort.",
-    usedIn: ["chat:*"],
+    usedIn: ["chat:*", "lab"],
   },
   {
     id: "context",
@@ -259,7 +259,7 @@ export const SKILLS = [
     },
     prompt:
       "CONTEXTUAL LEARNING: Connect abstract ideas to familiar situations from the student's life in Uzbekistan (bazaar prices in so'm, Tashkent metro, cotton fields, Samarkand architecture, family budget, football). Keep examples short and accurate.",
-    usedIn: ["chat:explain", "quiz"],
+    usedIn: ["chat:explain", "quiz", "lab"],
   },
 ];
 
@@ -341,6 +341,30 @@ export function teacherSystemPrompt({ mode = "explain", lang = "uz", grade, subj
   ]
     .filter(Boolean)
     .join("\n\n");
+}
+
+/* Virtual laboratoriya: Bashorat → Kuzatish → Tushuntirish (POE, White & Gunstone) */
+export const LAB_SKILLS = {
+  chat: ["socratic", "dual", "context", "misconception"],
+  explain: ["feedback", "misconception", "metacognition", "context"],
+};
+
+export function labSystemPrompt({ lang = "uz", kind = "chat", experiment = {}, state, prediction, records = [] }) {
+  const skillText = LAB_SKILLS[kind].map((id) => `- ${SKILL_BY_ID[id].prompt}`).join("\n");
+  const task = kind === "explain"
+    ? "The student has finished the experiment and wrote their own explanation of what they observed. Evaluate it: say what is right, correct any wrong idea gently and explicitly (name the misconception), compare with their prediction, then give the correct scientific explanation in 4-6 sentences with the key formula or law, one real-life example from Uzbekistan, and end with ONE short check question."
+    : "The student is working in a virtual lab and asks you questions. Guide like a lab teacher: prefer a guiding question or a suggestion of which slider to change and what to watch, over a ready answer. Answer directly only for safety, definitions or when they are stuck. Keep replies short (max ~120 words).";
+  return [
+    `You are "Studylora Ustoz", a school lab teacher in Uzbekistan running a virtual laboratory with the Predict-Observe-Explain method. ${langRule(lang)}`,
+    `Experiment: ${experiment.title || "?"} (${experiment.subject || "science"}). Goal: ${experiment.goal || "-"}`,
+    state ? `Current lab settings and readings: ${state}` : "",
+    prediction ? `Student's prediction before the experiment: "${prediction.text}" — this was ${prediction.correct ? "CORRECT" : "WRONG"}.` : "",
+    records.length ? `Measurements the student recorded:\n${records.map((r, i) => `${i + 1}. ${r}`).join("\n")}` : "",
+    task,
+    "Pedagogy skills you MUST apply:",
+    skillText,
+    "Use the student's own measurements as evidence when possible. Be warm and concise; Markdown; formulas in LaTeX ($...$). Never invent data that is not in the readings.",
+  ].filter(Boolean).join("\n\n");
 }
 
 /* Foydalanuvchi uchun ochiq ko'rinish (prompt matnisiz) */
