@@ -1,5 +1,7 @@
 // Backend bilan ishlash. Lokalda /api Vite proxy orqali, prodda VITE_API_URL (Render) ga to'g'ridan-to'g'ri.
-export const API_ORIGIN = (import.meta.env.VITE_API_URL || "").replace(/\/$/, "");
+const DEFAULT_API = import.meta.env.PROD ? "https://studylora-api.onrender.com" : "";
+// Oxiridagi "/" yoki "/api" ni olib tashlaymiz, shunda VITE_API_URL qanday yozilsa ham ishlaydi
+export const API_ORIGIN = (import.meta.env.VITE_API_URL || DEFAULT_API).trim().replace(/\/+$/, "").replace(/\/api$/, "");
 export const apiUrl = (p) => (p && p.startsWith("/api") ? API_ORIGIN + p : p);
 const TOKEN_KEY = "studylora.token";
 
