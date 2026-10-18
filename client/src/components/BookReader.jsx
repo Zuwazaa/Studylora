@@ -6,6 +6,7 @@ import pdfjsWorker from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 import { Chats, Me, getToken, apiUrl } from "../api/client";
 import { useApp } from "../context/AppContext";
 import ChatThread from "./ChatThread";
+import BookLoader from "./BookLoader";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
 
@@ -71,7 +72,7 @@ export default function BookReader({ title, pdfUrl, chatKey, intro, grade, subje
   // Shu kitob bo'yicha suhbatlar
   useEffect(() => {
     Chats.list(chatKey).then((r) => {
-      setConvs(r.conversations);
+      setConvs(r.conversations || []);
       if (r.conversations[0]) setConvId(r.conversations[0].id);
     }).catch(() => {});
   }, [chatKey]);
@@ -200,7 +201,7 @@ export default function BookReader({ title, pdfUrl, chatKey, intro, grade, subje
             </button>
           </div>
           <div className="pdf-area" ref={areaRef}>
-            {status === "loading" && <div className="center" style={{ padding: 60 }}><span className="spinner lg" /></div>}
+            {status === "loading" && <BookLoader />}
             {status === "error" && <div className="empty"><b>{t("reader.error")}</b>{t("reader.errorSub")}</div>}
             <div className={`pdf-page${selecting ? " selecting" : ""}`} style={{ display: status === "ready" ? "block" : "none" }}
                  onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up}>

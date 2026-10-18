@@ -170,6 +170,7 @@ export default {
   "course.confirmDelete": "Kitob va unga oid suhbatlar o'chiriladi. Davom etamizmi?",
 
   // Darslik o'quvchi
+  "loader.books": "Kitoblar tayyorlanmoqda",
   "reader.back": "Orqaga",
   "reader.book": "Kitob",
   "reader.chat": "Ustoz",

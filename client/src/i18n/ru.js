@@ -164,6 +164,7 @@ export default {
   "course.tooBig": "Файл больше 80 МБ",
   "course.confirmDelete": "Книга и связанные диалоги будут удалены. Продолжить?",
 
+  "loader.books": "Книги готовятся",
   "reader.back": "Назад",
   "reader.book": "Книга",
   "reader.chat": "Учитель",

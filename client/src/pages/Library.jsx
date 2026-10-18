@@ -7,6 +7,7 @@ import { PageHead } from "../components/Layout";
 import SubjectIcon from "../components/SubjectIcon";
 import BookReader from "../components/BookReader";
 import Iso from "../components/Iso";
+import BookLoader from "../components/BookLoader";
 
 export default function Library() {
   const { t, lang, user } = useApp();
@@ -22,7 +23,7 @@ export default function Library() {
   if (subj) {
     const key = bookKey(grade, subj.id);
     const url = books?.[key];
-    if (!books) return <div className="center" style={{ padding: 60 }}><span className="spinner lg" /></div>;
+    if (!books) return <BookLoader />;
     if (!url) {
       return (
         <div className="card empty" style={{ maxWidth: 560, margin: "40px auto" }}>
