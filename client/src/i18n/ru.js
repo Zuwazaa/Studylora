@@ -165,7 +165,6 @@ export default {
   "course.confirmDelete": "Книга и связанные диалоги будут удалены. Продолжить?",
 
   "loader.books": "Книги готовятся",
-  "reader.askAi": "Спросить ИИ",
   "reader.closeAi": "Закрыть панель ИИ",
   "reader.back": "Назад",
   "reader.book": "Книга",

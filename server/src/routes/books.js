@@ -5,11 +5,12 @@ import { getManifest, ensureBook, sendBook } from "../lib/books.js";
 
 const router = Router();
 
-// Ochiq: mavjud darsliklar { "10-algebra": "/api/books/file/10-algebra" }
+// Ochiq: mavjud darsliklar. Ochiq CDN'da turgan kitob uchun to'g'ridan-to'g'ri havola beriladi
+// (brauzer Cloudflare'dan tez oladi, serverdan o'tmaydi), qolganlari server orqali.
 router.get("/", async (req, res) => {
   const books = await getManifest();
   res.set("Cache-Control", "public, max-age=300");
-  res.json({ books: Object.fromEntries(Object.keys(books).map((k) => [k, `/api/books/file/${k}`])) });
+  res.json({ books: Object.fromEntries(Object.entries(books).map(([k, v]) => [k, v.legacy || `/api/books/file/${k}`])) });
 });
 
 // Darslik PDF'i (bucket yopiq — server orqali, Range bilan)

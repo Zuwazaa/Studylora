@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, ScanLine, ClipboardCheck, Layers3, Plus, MessagesSquare, ArrowLeft, X, Sparkles } from "lucide-react";
+import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, ScanLine, ClipboardCheck, Layers3, Plus, MessagesSquare, ArrowLeft, X } from "lucide-react";
 import * as pdfjsLib from "pdfjs-dist";
 import pdfjsWorker from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 import { Chats, Me, getToken, apiUrl } from "../api/client";
@@ -56,7 +56,8 @@ export default function BookReader({ title, pdfUrl, chatKey, intro, grade, subje
     let on = true;
     setStatus("loading");
     // Yuklangan kitoblar faqat egasiga beriladi — token bilan so'raymiz
-    const token = getToken();
+    // Tashqi (CDN) havolaga token yuborilmaydi
+    const token = /^https?:/i.test(pdfUrl) ? null : getToken();
     // Range so'rovlar: butun faylni kutmasdan faqat kerakli betlar yuklanadi
     const task = pdfjsLib.getDocument({
       url: apiUrl(pdfUrl),
@@ -192,7 +193,6 @@ export default function BookReader({ title, pdfUrl, chatKey, intro, grade, subje
         <div className="row wrap reader-actions">
           <button className="btn btn-soft sm" onClick={testHere}><ClipboardCheck size={16} />{t("reader.testHere")}</button>
           <button className="btn btn-soft sm" onClick={cardsHere}><Layers3 size={16} />{t("reader.cardsHere")}</button>
-          {!chatOpen && <button className="btn btn-soft sm" onClick={() => { setChatOpen(true); setTab("chat"); }}><Sparkles size={16} />{t("reader.askAi")}</button>}
         </div>
       </div>
 
